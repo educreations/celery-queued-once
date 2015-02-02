@@ -1,6 +1,6 @@
 # Celery Queued Once
 
-A Celery base task that deduplicates tasks that have identical parameters. Uses the Django cache for the locking backend, but works best with [django_redis](https://github.com/niwibe/django-redis).
+A [Celery](http://github.com/celery/celery.git) base task that deduplicates tasks that have identical parameters. Uses the Django cache for the locking backend, but works best with [django_redis](https://github.com/niwibe/django-redis).
 
 ## Copyright
 
