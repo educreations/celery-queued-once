@@ -21,7 +21,8 @@ def recursive_task(*args, **kwargs):
     test_case = kwargs.get('test_case')
     test_case.assertEqual(0, recursive_task.count)
     recursive_task.count += 1
-    recursive_task.delay(*args, **kwargs)
+    result = recursive_task.delay(*args, **kwargs)
+    test_case.assertEqual(result.id, current.request.id)
     test_case.assertEqual(1, recursive_task.count)
 
 
@@ -54,7 +55,8 @@ def exception_task(*args, **kwargs):
 def recursive_exception_task(*args, **kwargs):
     test_case = kwargs.get('test_case')
     recursive_exception_task.count += 1
-    recursive_exception_task.delay(*args, **kwargs)
+    result = recursive_exception_task.delay(*args, **kwargs)
+    test_case.assertEqual(result.id, current.request.id)
     test_case.assertEqual(1, recursive_exception_task.count)
 
     raise CustomException('Custom')
