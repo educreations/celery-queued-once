@@ -2,10 +2,26 @@
 
 # Django must be set up before we import our libraries and run our tests
 
+import os
 import sys
 
 import django
 from django.conf import settings
+
+
+if os.environ.get('TEST_WITH_REDIS'):
+    CACHE = {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        "LOCATION": 'redis://127.0.0.1:6379/1',
+    }
+else:
+    CACHE = {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'localhost',
+        'OPTIONS': {
+            'MAX_ENTRIES': 2 ** 32,
+        },
+    }
 
 
 settings.configure(
@@ -16,13 +32,7 @@ settings.configure(
         },
     },
     CACHES={
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'localhost',
-            'OPTIONS': {
-                'MAX_ENTRIES': 2 ** 32,
-            },
-        },
+        'default': CACHE,
     },
     INSTALLED_APPS=(
         'django.contrib.auth',

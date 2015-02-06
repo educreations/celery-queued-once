@@ -1,0 +1,15 @@
+language: "python"
+sudo: false
+env:
+  - TEST_WITH_REDIS=0
+  - TEST_WITH_REDIS=1
+python:
+  - "pypy"
+  - "2.7"
+script:
+  - "python runtests.py"
+after_success:
+  - pip install flake8
+  - flake8 queued_once setup.py
+services:
+  - redis-server
