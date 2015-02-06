@@ -23,7 +23,18 @@ class QueuedOnceTask(Task):
         return get_cache(backend)
 
     def _key_from_args(self, args=None, kwargs=None):
-        unhashed = u'{}-{}-{}'.format(self.__name__, args, kwargs)
+        if args is None:
+            args = ()
+        if kwargs is None:
+            kwargs = {}
+        sorted_kwargs = [(key, kwargs[key]) for key in sorted(kwargs)]
+
+        unhashed = unicode((
+            self.__module__,
+            self.__name__,
+            args,
+            sorted_kwargs,
+        ))
         hashed = hashlib.md5(unhashed.encode('utf-8'))
         return 'queuedtasks:{}'.format(hashed.hexdigest())
 
