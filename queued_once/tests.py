@@ -133,4 +133,6 @@ class QueuedOnceTaskTest(SimpleTestCase):
         self.assertEqual(1, recursive_exception_task.count)
 
     def test_custom_key(self):
+        self.assertLockNotTaken(recursive_task_with_key, mykey=42)
         recursive_task_with_key.delay(test_case=self, mykey=42).get()
+        self.assertLockNotTaken(recursive_task_with_key, mykey=42)
