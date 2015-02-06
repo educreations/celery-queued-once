@@ -21,8 +21,19 @@ def recursive_task(*args, **kwargs):
     test_case = kwargs.get('test_case')
     test_case.assertEqual(0, recursive_task.count)
     recursive_task.count += 1
-    recursive_task.delay(*args, **kwargs)
+    result = recursive_task.delay(*args, **kwargs)
+    test_case.assertEqual(result.id, current.request.id)
     test_case.assertEqual(1, recursive_task.count)
+
+
+@task(base=QueuedOnceTask, once_key_arg='mykey')
+def recursive_task_with_key(*args, **kwargs):
+    test_case = kwargs.get('test_case')
+    depth = kwargs.get('depth', 0)
+    test_case.assertEqual(0, depth)
+    kwargs['depth'] = depth + 1
+    result = recursive_task_with_key.delay(*args, **kwargs)
+    test_case.assertEqual(result.id, current.request.id)
 
 
 @task(base=QueuedOnceTask)
@@ -54,7 +65,8 @@ def exception_task(*args, **kwargs):
 def recursive_exception_task(*args, **kwargs):
     test_case = kwargs.get('test_case')
     recursive_exception_task.count += 1
-    recursive_exception_task.delay(*args, **kwargs)
+    result = recursive_exception_task.delay(*args, **kwargs)
+    test_case.assertEqual(result.id, current.request.id)
     test_case.assertEqual(1, recursive_exception_task.count)
 
     raise CustomException('Custom')
@@ -73,8 +85,9 @@ class QueuedOnceTaskTest(SimpleTestCase):
             self.cache.clear()
         current_app.config_from_object(settings)
 
-    def assertLockNotTaken(self, task):
-        lock = task._get_lock(task._key_from_args((), {'test_case': self}))
+    def assertLockNotTaken(self, task, *args, **kwargs):
+        lock = task._get_lock(
+            task._key_from_args(args, dict(test_case=self, **kwargs)))
         self.assertIsNone(lock)
 
     def assertIsUUID(self, value):
@@ -118,3 +131,8 @@ class QueuedOnceTaskTest(SimpleTestCase):
             result.get()
         self.assertLockNotTaken(recursive_exception_task)
         self.assertEqual(1, recursive_exception_task.count)
+
+    def test_custom_key(self):
+        self.assertLockNotTaken(recursive_task_with_key, mykey=42)
+        recursive_task_with_key.delay(test_case=self, mykey=42).get()
+        self.assertLockNotTaken(recursive_task_with_key, mykey=42)
