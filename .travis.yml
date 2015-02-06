@@ -1,7 +1,7 @@
 language: "python"
 sudo: false
 env:
-  - TEST_WITH_REDIS=0
+  - TEST_WITH_REDIS=
   - TEST_WITH_REDIS=1
 python:
   - "pypy"
