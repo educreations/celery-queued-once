@@ -13,6 +13,7 @@ log = get_task_logger(__name__)
 
 class QueuedOnceTask(Task):
     abstract = True
+    once_key_arg = None
 
     _LOCK_EXPIRE = 60 * 60 * 24  # 24 hours
 
@@ -27,14 +28,25 @@ class QueuedOnceTask(Task):
             args = ()
         if kwargs is None:
             kwargs = {}
-        sorted_kwargs = [(key, kwargs[key]) for key in sorted(kwargs)]
 
-        unhashed = unicode((
-            self.__module__,
-            self.__name__,
-            args,
-            sorted_kwargs,
-        ))
+        if self.once_key_arg is None:
+            sorted_kwargs = [(key, kwargs[key]) for key in sorted(kwargs)]
+            key_args = (args, sorted_kwargs)
+        elif isinstance(self.once_key_arg, int):
+            if len(args) <= self.once_key_arg:
+                raise ValueError(
+                    'Task requires at least {} positional argument(s) due to '
+                    'once_key_arg={}'
+                    .format(self.once_key_arg + 1, self.once_key_arg))
+            key_args = args[self.once_key_arg]
+        else:
+            if self.once_key_arg not in kwargs:
+                raise ValueError(
+                    'Task requires keyword argument {0!r} due to once_key_arg'
+                    .format(self.once_key_arg))
+            key_args = kwargs[self.once_key_arg]
+
+        unhashed = unicode((self.__module__, self.__name__, key_args))
         hashed = hashlib.md5(unhashed.encode('utf-8'))
         return 'queuedtasks:{}'.format(hashed.hexdigest())
 
