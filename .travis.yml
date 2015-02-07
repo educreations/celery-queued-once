@@ -6,10 +6,11 @@ env:
 python:
   - "pypy"
   - "2.7"
-script:
-  - "python runtests.py"
-after_success:
+before_install:
   - pip install flake8 codecov
+script:
+  - coverage run --branch runtests.py
+after_success:
   - flake8 queued_once setup.py
   - codecov
 services:
