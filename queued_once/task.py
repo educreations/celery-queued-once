@@ -6,7 +6,10 @@ from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.core.cache import get_cache
 from django.utils.functional import cached_property
-from django_redis.cache import RedisCache
+try:
+    from django_redis.cache import RedisCache
+except ImportError:
+    RedisCache = None
 
 log = get_task_logger(__name__)
 
@@ -57,7 +60,7 @@ class QueuedOnceTask(Task):
     def _take_lock(self, task_id, key):
 
         # Determine if we're using Redis as our cache
-        is_redis = isinstance(self.cache, RedisCache)
+        is_redis = RedisCache is not None and isinstance(self.cache, RedisCache)
 
         # If we're using Redis, utilize SETNX
         set_kwargs = {'nx': True} if is_redis else {}
