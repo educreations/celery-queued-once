@@ -9,7 +9,8 @@ python:
 script:
   - "python runtests.py"
 after_success:
-  - pip install flake8
+  - pip install flake8 codecov
   - flake8 queued_once setup.py
+  - codecov
 services:
   - redis-server
