@@ -10,5 +10,5 @@ setup(
     author='Corey Farwell',
     author_email='corey@educreations.com',
     packages=['queued_once'],
-    install_requires=['celery', 'django'],
+    install_requires=['celery', 'django >= 1.7'],
 )
