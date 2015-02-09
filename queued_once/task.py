@@ -4,7 +4,7 @@ from celery import Task
 from celery.utils import uuid
 from celery.utils.log import get_task_logger
 from django.conf import settings
-from django.core.cache import get_cache
+from django.core.cache import caches
 from django.utils.functional import cached_property
 try:
     from django_redis.cache import RedisCache
@@ -24,7 +24,7 @@ class QueuedOnceTask(Task):
     def cache(self):
         backend = getattr(
             settings, 'CELERY_QUEUES_ONCE_CACHE_BACKEND', 'default')
-        return get_cache(backend)
+        return caches[backend]
 
     def _key_from_args(self, args=None, kwargs=None):
         if args is None:
