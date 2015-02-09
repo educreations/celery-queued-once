@@ -49,7 +49,8 @@ class QueuedOnceTask(Task):
                     .format(self.once_key_arg))
             key_args = kwargs[self.once_key_arg]
 
-        unhashed = unicode((self.__module__, self.__name__, key_args))
+        unhashed = u"({},{},{})".format(
+            self.__module__, self.__name__, key_args)
         hashed = hashlib.md5(unhashed.encode('utf-8'))
         return 'queuedtasks:{}'.format(hashed.hexdigest())
 
