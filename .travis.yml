@@ -1,18 +1,33 @@
-language: "python"
+language: python
+
 sudo: false
+
 env:
   - TEST_WITH_REDIS=
   - TEST_WITH_REDIS=1
+
 python:
   - "pypy"
   - "2.7"
   - "3.4"
+
 before_install:
   - pip install flake8 codecov
+
 script:
   - coverage run --branch runtests.py
+
 after_success:
   - flake8 queued_once setup.py
   - codecov
+
 services:
   - redis-server
+
+notifications:
+  hipchat:
+    format: html
+    template:
+    - ! '%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message} (<a href="%{build_url}">Details</a>/<a href="%{compare_url}">Change view</a>)'
+    rooms:
+      secure: cBCkB1dzKd3wxpdyZ2X9EPZ4fKZdccIkl/Cb6u+jTmoGQFk0bdTG8P7OUR5CiRZ6t9tScohqlQkIq76TK4Oteso3egRKh56fxj+loEHJTH2CQeZ/toqcmBPzWzG/F86JvW5U/ywPuvUSgM/xeV8uFxlgUIfli8y4Aujjl8pgC5I=
