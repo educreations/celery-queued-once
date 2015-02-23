@@ -61,7 +61,8 @@ class QueuedOnceTask(Task):
     def _take_lock(self, task_id, key):
 
         # Determine if we're using Redis as our cache
-        is_redis = RedisCache is not None and isinstance(self.cache, RedisCache)
+        is_redis = (RedisCache is not None and
+                    isinstance(self.cache, RedisCache))
 
         # If we're using Redis, utilize SETNX
         set_kwargs = {'nx': True} if is_redis else {}
