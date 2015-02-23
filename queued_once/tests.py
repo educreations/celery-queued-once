@@ -5,7 +5,7 @@ from django.core.cache import get_cache
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
-from queued_once import QueuedOnceTask
+from queued_once import CouldNotObtainLock, QueuedOnceTask
 
 
 @task(base=QueuedOnceTask)
@@ -131,6 +131,20 @@ class QueuedOnceTaskTest(SimpleTestCase):
             result.get()
         self.assertLockNotTaken(recursive_exception_task)
         self.assertEqual(1, recursive_exception_task.count)
+
+    def test_could_not_obtain_lock(self):
+        @task(base=QueuedOnceTask)
+        def small_task(*args, **kwargs):
+            pass
+
+        small_task._take_lock = lambda x, y: False
+
+        self.assertLockNotTaken(small_task)
+        small_task.count = 0
+        with self.assertRaises(CouldNotObtainLock):
+            small_task.delay(test_case=self)
+        self.assertLockNotTaken(small_task)
+        self.assertEqual(0, small_task.count)
 
     def test_custom_key(self):
         self.assertLockNotTaken(recursive_task_with_key, mykey=42)
