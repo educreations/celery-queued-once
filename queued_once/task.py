@@ -85,6 +85,7 @@ class QueuedOnceTask(Task):
             return super(QueuedOnceTask, self).apply_async(
                 args, kwargs, **other)
 
+        # Determine lock cache key
         key = self._key_from_args(args, kwargs)
 
         # See if this task is already queued
