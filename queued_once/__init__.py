@@ -1,1 +1,1 @@
-from queued_once.task import QueuedOnceTask  # noqa
+from queued_once.task import CouldNotObtainLock, QueuedOnceTask  # noqa

@@ -14,6 +14,10 @@ except ImportError:
 log = get_task_logger(__name__)
 
 
+class CouldNotObtainLock(Exception):
+    pass
+
+
 class QueuedOnceTask(Task):
     abstract = True
     once_key_arg = None
@@ -61,13 +65,16 @@ class QueuedOnceTask(Task):
     def _take_lock(self, task_id, key):
 
         # Determine if we're using Redis as our cache
-        is_redis = RedisCache is not None and isinstance(self.cache, RedisCache)
+        is_redis = (RedisCache is not None and
+                    isinstance(self.cache, RedisCache))
 
         # If we're using Redis, utilize SETNX
         set_kwargs = {'nx': True} if is_redis else {}
 
         # Set the lock in the cache
-        self.cache.set(key, task_id, self._LOCK_EXPIRE, **set_kwargs)
+        success = self.cache.set(key, task_id, self._LOCK_EXPIRE, **set_kwargs)
+
+        return success if is_redis else True
 
     def _clear_lock(self, key):
         self.cache.delete(key)
@@ -75,6 +82,8 @@ class QueuedOnceTask(Task):
     @staticmethod
     def _propagates_exceptions():
         return getattr(settings, 'CELERY_EAGER_PROPAGATES_EXCEPTIONS', False)
+
+    MAX_LOCK_SPINS = 40
 
     def apply_async(self, args=None, kwargs=None, **other):
         if self._propagates_exceptions():
@@ -84,25 +93,38 @@ class QueuedOnceTask(Task):
             return super(QueuedOnceTask, self).apply_async(
                 args, kwargs, **other)
 
+        # Determine lock cache key
         key = self._key_from_args(args, kwargs)
 
-        # See if this task is already queued
-        task_id = self._get_lock(key)
-        if task_id:
-            log.debug(
-                'Got a duplicate task for one that was previously queued.',
-                extra={'data': {
-                    'task_id': task_id,
-                    'name': self.__name__,
-                    'args': args,
-                    'kwargs': kwargs
-                }}
-            )
-            return self.AsyncResult(task_id)
+        # Generate or get the task_id
+        new_task_id = other.setdefault('task_id', uuid())
 
-        # Generate or get the task_id and use it.
-        task_id = other.setdefault('task_id', uuid())
-        self._take_lock(task_id, key)
+        # Variable to represent if we've taken the lock
+        lock_taken = False
+
+        # Make sure we don't loop for too long
+        spin_count = 0
+
+        while not lock_taken:
+            if spin_count > self.MAX_LOCK_SPINS:
+                raise CouldNotObtainLock
+
+            # See if this task is already queued
+            existing_task_id = self._get_lock(key)
+            if existing_task_id:
+                log.debug(
+                    'Got a duplicate task for one that was previously queued.',
+                    extra={'data': {
+                        'task_id': existing_task_id,
+                        'name': self.__name__,
+                        'args': args,
+                        'kwargs': kwargs
+                    }}
+                )
+                return self.AsyncResult(existing_task_id)
+
+            lock_taken = self._take_lock(new_task_id, key)
+            spin_count += 1
 
         # Actually apply the task
         return super(QueuedOnceTask, self).apply_async(args, kwargs, **other)
