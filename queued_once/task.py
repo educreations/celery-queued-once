@@ -38,6 +38,8 @@ class QueuedOnceTask(Task):
 
         if self.once_key_arg is None:
             sorted_kwargs = [(key, kwargs[key]) for key in sorted(kwargs)]
+            if args and isinstance(args[0], QueuedOnceTask):
+                args = args[1:]
             key_args = (args, sorted_kwargs)
         elif isinstance(self.once_key_arg, int):
             if len(args) <= self.once_key_arg:
