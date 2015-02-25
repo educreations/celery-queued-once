@@ -72,6 +72,19 @@ def recursive_exception_task(*args, **kwargs):
     raise CustomException('Custom')
 
 
+@task(base=QueuedOnceTask, bind=True)
+def bound_task(*args, **kwargs):
+    test_case = kwargs.get('test_case')
+    lock = current._get_lock(current._key_from_args(args, kwargs))
+    test_case.assertIsNotNone(lock)
+    test_case.assertEqual(current.request.id, lock)
+
+    test_case.assertTrue(isinstance(args[0], QueuedOnceTask))
+    test_case.assertEqual(args[0].request.id, current.request.id)
+    lock2 = current._get_lock(current._key_from_args(args[1:], kwargs))
+    test_case.assertEqual(lock, lock2)
+
+
 @override_settings(CELERY_EAGER_PROPAGATES_EXCEPTIONS=False)
 class QueuedOnceTaskTest(SimpleTestCase):
 
@@ -150,3 +163,10 @@ class QueuedOnceTaskTest(SimpleTestCase):
         self.assertLockNotTaken(recursive_task_with_key, mykey=42)
         recursive_task_with_key.delay(test_case=self, mykey=42).get()
         self.assertLockNotTaken(recursive_task_with_key, mykey=42)
+
+    def test_bound_task(self):
+        self.assertLockNotTaken(bound_task)
+        result = bound_task.delay(test_case=self)
+        result.get()
+        self.assertIsUUID(result.id)
+        self.assertLockNotTaken(bound_task)
