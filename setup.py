@@ -17,6 +17,8 @@ setup(
     version='0.1',
     description='Celery base task de-duplicating tasks',
     author='Educreations Engineering',
+    author_email='engineering@educreations.com',
+    url='https://github.com/educreations/celery-queued-once',
     packages=['queued_once'],
     install_requires=['celery', 'django >= 1.7'],
 )
