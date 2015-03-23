@@ -7,8 +7,7 @@ from setuptools import setup
 
 
 if sys.argv[-1] == 'publish':
-    os.system('python setup.py register sdist upload')
-    os.system('python setup.py register bdist_wheel upload')
+    os.system('python setup.py register sdist bdish_wheel upload')
     sys.exit()
 
 
