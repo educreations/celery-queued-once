@@ -19,5 +19,5 @@ setup(
     author_email="engineering@educreations.com",
     url="https://github.com/educreations/celery-queued-once",
     packages=["queued_once"],
-    install_requires=["celery>=3.1.17,<4.0", "Django>=1.7.4,<1.10"],
+    install_requires=["celery>=3.1.17,<4.0", "Django>=1.8.0,<1.10"],
 )
