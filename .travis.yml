@@ -9,7 +9,9 @@ env:
 python:
   - "pypy"
   - "2.7"
-  - "3.4"
+  - "3.6"
+  - "3.7"
+  - "3.8"
 
 before_install:
   - pip install flake8 codecov
@@ -23,11 +25,3 @@ after_success:
 
 services:
   - redis-server
-
-notifications:
-  hipchat:
-    format: html
-    template:
-    - ! '%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message} (<a href="%{build_url}">Details</a>/<a href="%{compare_url}">Change view</a>)'
-    rooms:
-      secure: cBCkB1dzKd3wxpdyZ2X9EPZ4fKZdccIkl/Cb6u+jTmoGQFk0bdTG8P7OUR5CiRZ6t9tScohqlQkIq76TK4Oteso3egRKh56fxj+loEHJTH2CQeZ/toqcmBPzWzG/F86JvW5U/ywPuvUSgM/xeV8uFxlgUIfli8y4Aujjl8pgC5I=
